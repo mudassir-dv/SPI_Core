@@ -1,79 +1,79 @@
-//////////////////////////////////////////////////////////////
-//                                                          //
-//	SPI_MASTER_CORE             						    //
-//															//
+///////////////////////////////////////////////////////////////////
+//                                                         	 //
+//	SPI_MASTER_CORE             				//
+//								//
 //  design 	    : spi_master top module                     //
 //  project     : spi_master core                   		//
-//				  											//
-//  Description :                                           //
+//								//
+//  Description :                                          	//
 //   - A SPI Master module with support for configurable  	//
 //     modes, variable data word transfer and variable 		//
-//     clock frequency.								        //
+//     clock frequency.						//
 //   - WISHBONE interface for integration.          		//
-//   - Enables data transmission and reception with robust  //
+//   - Enables data transmission and reception with robust      //
 //     buffer management to prevent "data overrun"   		//
-//	   conditions.                   						//
-//                                                          //
-// Features:                                                //
-//   - Variable data word transfer (default: 8 bits).       //
-//   - Flexible clock divider for frequency scaling.        //
+//	   conditions.                   			//
+//                                                          	//
+// Features:                                                	//
+//   - Variable data word transfer (default: 8 bits).      	//
+//   - Flexible clock divider for frequency scaling.        	//
 //   - Supports SPI transmission and reception with 		//
-//     LSB/MSB first modes.									//
+//     LSB/MSB first modes.					//
 //   - Full-duplex SPI communication with configurable 		//
-//     control registers.									//
+//     control registers.					//
 //   - SPI communication with all configurable modes		//
-//                                                          //
-//	  -----------------------------------------				//
-//	  |    Modes	|	 cpol 	|	 cpha	  |				//
-//	  -----------------------------------------				//
-//	  |	   Mode 0 	|  	  0  	|	  0		  |				//
-//	  |	   Mode 1 	|     0  	|	  1		  |				//
-//	  |	   Mode 2 	|     1  	|	  0		  |				//
-//	  |	   Mode 3 	|     1  	|	  1		  |				//
-//	  -----------------------------------------				//
-//                                                          //
-//////////////////////////////////////////////////////////////
-//                                                          //
-// Copyright (C) 2024 Md Mudassir Ahmed                     //
-//                                                          //
-// This source file is free for all use and distribution    //
-// "as is." No restrictions apply to its use, modification, //
+//                                                          	//
+//	  -----------------------------------------		//
+//	  |    Modes	|    cpol    |	 cpha	  |		//
+//	  -----------------------------------------		//
+//	  |   Mode 0 	|     0      |	  0	  |		//
+//	  |   Mode 1 	|     0      |	  1	  |		//
+//	  |   Mode 2 	|     1      |	  0	  |		//
+//	  |   Mode 3 	|     1      |	  1	  |		//
+//	  -----------------------------------------		//
+//                                                          	//
+//////////////////////////////////////////////////////////////////
+//                                                         	//
+// Copyright (C) 2024 Md Mudassir Ahmed                     	//
+//                                                          	//
+// This source file is free for all use and distribution    	//
+// "as is." No restrictions apply to its use, modification, 	//
 // or redistribution provided that this notice remains 		//
-//  included in any derivative work.						//
-//															//
-// License Terms:                                           //
+//  included in any derivative work.				//
+//								//
+// License Terms:                                           	//
 // 1. You are free to use, modify, and distribute this    	//
-//    code for any purpose, including commercial 			//
-//	  applications.											//
+//    code for any purpose, including commercial 		//
+//	  applications.						//
 // 2. You must retain this notice and the disclaimer  		//
-//    in all copies or substantial portions of the code.    //
-//                                                          //
+//    in all copies or substantial portions of the code.    	//
+//                                                          	//
 // Disclaimer:                                      		//
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY  		//
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT		//
-// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 			//
+// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 		//
 // FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.	//
 // IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM,	//
 // DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF		//
 // CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF,		//
 // OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER  	//
-// DEALINGS IN THE SOFTWARE.								//
-//////////////////////////////////////////////////////////////
+// DEALINGS IN THE SOFTWARE.					//
+//////////////////////////////////////////////////////////////////
 
 module spi_master#(parameter WIDTH = 8)(
     // WISHBONE interface
-    input  	        		wb_clk_i,
-    input  	        		wb_rst_i,
+    input  	        	wb_clk_i,
+    input  	        	wb_rst_i,
     input  	          [2:0] wb_adr_i,
     input  	    [WIDTH-1:0] wb_dat_i,
-    output reg  [WIDTH-1:0] wb_dat_o,
-//  input  	 	      [3:0] wb_sel_i,
-    input  	        		wb_we_i,
-    input  	        		wb_stb_i,
-    input  	        		wb_cyc_i,
-    output 	        		wb_ack_o,
-    output 	        		wb_err_o,
-    output 	        		wb_int_o,
+    output reg      [WIDTH-1:0] wb_dat_o,
+//  input  	 	  [3:0] wb_sel_i,
+    input  	        	wb_we_i,
+    input  	        	wb_stb_i,
+    input  	        	wb_cyc_i,
+    output 	        	wb_ack_o,
+    output 	        	wb_err_o,
+    output 	        	wb_int_o,
 
     // SPI external connections
     output reg   	  [2:0] ss_pad_o,	//slave select
@@ -83,17 +83,17 @@ module spi_master#(parameter WIDTH = 8)(
 );
 
 	// Internal Registers
-	reg 		 	[7:0] ctrl;		//Control Register
-	wire		  	[3:0] spsr;		//Status Register (Read-Only)
-	reg 		  	[2:0] divider;	//Divider and
-	reg 		  	[2:0] ss_n;		//Slave Select Register
-	reg					  cpol;		
-	reg					  cpha;
+	reg 		  [7:0] ctrl;		//Control Register
+	wire		  [3:0] spsr;		//Status Register (Read-Only)
+	reg 		  [2:0] divider;		//Divider and
+	reg 		  [2:0] ss_n;		//Slave Select Register
+	reg			cpol;		
+	reg			cpha;
 
 	// WISHBONE interface signals
-	reg        			wb_ack;
-	reg       			wb_err;
-	reg        			wb_int;
+	reg        		wb_ack;
+	reg       		wb_err;
+	reg        		wb_int;
 
 	// SPI shift register
 	reg   		  [7:0] spi_shift_tx;
@@ -114,16 +114,16 @@ module spi_master#(parameter WIDTH = 8)(
 	reg   		  [6:0] char_len;
 	
 	// Internal status flags of spsr registers
-	assign spsr[3]   = wfull;
-	assign spsr[2]   = wempty;
-	assign spsr[1]   = rfull;
-	assign spsr[0]   = rempty;
+	assign spsr[3]   =  wfull;
+	assign spsr[2]   =  wempty;
+	assign spsr[1]   =  rfull;
+	assign spsr[0]   =  rempty;
 
 	// State machine states -> gray-encoding
  	parameter [1:0] IDLE      = 2'b00,
- 					START     = 2'b01,
- 					TRANSFER  = 2'b11,
- 					END       = 2'b10;
+ 			START     = 2'b01,
+ 			TRANSFER  = 2'b11,
+ 			END       = 2'b10;
 
 	reg [1:0] state;
 	
@@ -341,7 +341,7 @@ module spi_master#(parameter WIDTH = 8)(
 							end
 						end
 					
-					END: begin
+					END : begin
 						// write received data into fifo
 						if(~rfull && rx_neg) begin
 							rfwe <= 1'b1;
@@ -354,8 +354,8 @@ module spi_master#(parameter WIDTH = 8)(
 						ss_pad_o <= 3'b111;
 						wb_int   <= 1'b1;
 						state    <= IDLE;
-                      	mosi_pad_o <= 1'bz;
-					end
+                      				mosi_pad_o <= 1'bz;
+					     end
 				endcase
 			end
 		end  

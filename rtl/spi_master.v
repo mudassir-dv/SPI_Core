@@ -76,43 +76,42 @@ module spi_master#(parameter WIDTH = 8)(
     output 	        		wb_int_o,
 
     // SPI external connections
-    output reg        [2:0] ss_pad_o,	//slave select
+    output reg   	  [2:0] ss_pad_o,	//slave select
     output reg        		sclk_pad_o,	//output clock line for synchronous xmission and reception
     output reg        		mosi_pad_o,	//output xmission line
     input           		miso_pad_i	//input reception line
 );
 
 	// Internal Registers
-	reg 				  [7:0] ctrl;		//Control Register
-	wire				  [3:0] spsr;		//Status Register (Read-Only)
-	
-	reg 				  [2:0] divider;	//Divider and
-	reg 				  [2:0] ss_n;		//Slave Select Register
-	reg							cpol;		
-	reg							cpha;
+	reg 		 	[7:0] ctrl;		//Control Register
+	wire		  	[3:0] spsr;		//Status Register (Read-Only)
+	reg 		  	[2:0] divider;	//Divider and
+	reg 		  	[2:0] ss_n;		//Slave Select Register
+	reg					  cpol;		
+	reg					  cpha;
 
 	// WISHBONE interface signals
-	reg        wb_ack;
-	reg        wb_err;
-	reg        wb_int;
+	reg        			wb_ack;
+	reg       			wb_err;
+	reg        			wb_int;
 
 	// SPI shift register
-	reg   	[7:0] spi_shift_tx;
-	reg   	[7:0] spi_shift_rx;
-	reg     [4:0] spi_shift_cnt;	
+	reg   		  [7:0] spi_shift_tx;
+	reg   		  [7:0] spi_shift_rx;
+	reg     	  [4:0] spi_shift_cnt;	
 
 	// Clock generator
-	reg    [3:0] clk_div;
+	reg   		  [3:0] clk_div;
 
 	// Internal control signals
-	reg         ass;
-	reg         ie;
-	reg         lsb;
-	reg         tx_neg;
-	reg         rx_neg;
-	reg         go_bsy;
-	reg	  [1:0] char_enc;	
-	reg   [6:0] char_len;
+	reg         		ass;
+	reg         		ie;
+	reg         		lsb;
+	reg         		tx_neg;
+	reg         		rx_neg;
+	reg         		go_bsy;
+	reg   		  [1:0] char_enc;	
+	reg   		  [6:0] char_len;
 	
 	// Internal status flags of spsr registers
 	assign spsr[3]   = wfull;
@@ -120,11 +119,11 @@ module spi_master#(parameter WIDTH = 8)(
 	assign spsr[1]   = rfull;
 	assign spsr[0]   = rempty;
 
-	// State machine states -> one-hot encoding
+	// State machine states -> gray-encoding
  	parameter [1:0] IDLE      = 2'b00,
  					START     = 2'b01,
- 					TRANSFER  = 2'b10,
- 					END       = 2'b11;
+ 					TRANSFER  = 2'b11,
+ 					END       = 2'b10;
 
 	reg [1:0] state;
 	
@@ -164,12 +163,12 @@ module spi_master#(parameter WIDTH = 8)(
 	//decode transfers character lenght
 	always @(*)
 		begin
-			case(char_enc)
-				2'b00	: char_len = 6'd8;			//1-byte
-				2'b01	: char_len = 6'd16;			//2-bytes
-				2'b10	: char_len = 6'd32;			//3-bytes
-				default : char_len = 6'd8;			//default 1-byte
-			endcase
+		    case(char_enc)
+			2'b00	: char_len = 6'd8;			//1-byte
+			2'b01	: char_len = 6'd16;			//2-bytes
+			2'b10	: char_len = 6'd32;			//3-bytes
+			default : char_len = 6'd8;			//default 1-byte
+		    endcase
 		end
 		
 	
@@ -179,85 +178,85 @@ module spi_master#(parameter WIDTH = 8)(
 	// WISHBONE interface
 	always @(posedge wb_clk_i) 
 		begin
-			if (wb_rst_i) begin
-				// Reset WISHBONE interface signals
-				wb_ack <= 1'b0;
-				wb_err <= 1'b0;
-				wb_int <= 1'b0;
-			end 
+		    if (wb_rst_i) begin
+			// Reset WISHBONE interface signals
+			wb_ack <= 1'b0;
+			wb_err <= 1'b0;
+			wb_int <= 1'b0;
+		    end 
 			
-			else if (wb_acc) begin
+		    else if (wb_acc) begin
 				// Handle WISHBONE bus cycle
 				case (wb_adr_i)
-					3'b000 : begin
-								// Data receive register 0
-								if (wb_we_i) begin
-									if(~wfull) begin
-										// Write data w_fifo register
-										wdin <= wb_dat_i;
-										wfwe <= 1'b1;
-									end
-									else
-										wfwe <= 1'b0;
-								end 
-								else begin
-									if(~rempty) begin
-										// Read data w_fifo register
-										wb_dat_o <= rdout;
-										rfre <= 1'b1;
-									end
-									else 
-										rfre <= 1'b0;
-								end
-							end
+				3'b000 : begin
+					// Data receive register 0
+					if (wb_we_i) begin
+						if(~wfull) begin
+							// Write data w_fifo register
+							wdin <= wb_dat_i;
+							wfwe <= 1'b1;
+						end
+						else
+							wfwe <= 1'b0;
+					end 
+					else begin
+						if(~rempty) begin
+							// Read data w_fifo register
+							wb_dat_o <= rdout;
+							rfre <= 1'b1;
+						end
+						else 
+							rfre <= 1'b0;
+					end
+				end
 							
-					3'b001 : begin
-								// Divider and slave select register
-								if (wb_we_i) begin
-									// Write to divider & slave select register
-									{cpol, cpha, divider, ss_n} <= wb_dat_i;
-								end 
-								else begin
-									// Read from divider & slave select register
-									wb_dat_o <= {cpol, cpha, divider, ss_n};
-								end
-							end
+				3'b001 : begin
+					// Divider and slave select register
+					if (wb_we_i) begin
+						// Write to divider & slave select register
+						{cpol, cpha, divider, ss_n} <= wb_dat_i;
+					end 
+					else begin
+						// Read from divider & slave select register
+						wb_dat_o <= {cpol, cpha, divider, ss_n};
+					end
+				end
 							
-					 3'b010 : begin
-								// Control register
-								if (wb_we_i) begin
-									// Write to control register
-									ctrl 	<= wb_dat_i;
-									ass  	<= wb_dat_i[7];
-									ie   	<= wb_dat_i[6];
-									lsb  	<= wb_dat_i[5];
-									tx_neg 	<= wb_dat_i[4];
-									rx_neg 	<= wb_dat_i[3];
-									go_bsy 	<= wb_dat_i[2];
-									char_enc <= wb_dat_i[1:0];
-								end 
-								else begin
-									// Read from control register
-									wb_dat_o <= ctrl;
-								end
-							end
+				3'b010 : begin
+					// Control register
+					if (wb_we_i) begin
+						// Write to control register
+						ctrl 	<= wb_dat_i;
+						ass  	<= wb_dat_i[7];
+						ie   	<= wb_dat_i[6];
+						lsb  	<= wb_dat_i[5];
+						tx_neg 	<= wb_dat_i[4];
+						rx_neg 	<= wb_dat_i[3];
+						go_bsy 	<= wb_dat_i[2];
+						char_enc <= wb_dat_i[1:0];
+					end 
+					else begin
+						// Read from control register
+						wb_dat_o <= ctrl;
+					end
+				end
 							
-					3'b011 : begin
-								// Status register
-								if (~wb_we_i) begin
-									// Read-only register
-									wb_dat_o <= spsr;		
-								end
-								else begin
-									//error!! (cannot write into spsr)
-									wb_err <= 1'b1;
-								end
-							end	
+				3'b011 : begin
+					// Status register
+					if (~wb_we_i) begin
+						// Read-only register
+						wb_dat_o <= spsr;		
+					end
+					else begin
+						//error!! (cannot write into spsr)
+						wb_err <= 1'b1;
+					end
+				end	
 							
-					default: begin
-								// Invalid address
-								wb_err <= 1'b1;
-							end
+				default: begin
+					// Invalid address
+					wb_err <= 1'b1;
+					end
 				endcase
 				wb_ack <= 1'b1;
 			end 

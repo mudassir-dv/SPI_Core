@@ -1,10 +1,10 @@
 //////////////////////////////////////////////////////////////
 //                                                          //
-// FIFO MODULE                              				        //
+// FIFO MODULE                              				//
 //                                                          //
-// design      : parameterized fifo Buffer    				      //
+// design      : parameterized fifo Buffer    				//
 // Project     : spi_master core                            //
-//															                            //
+//															//
 // Description :                                            //
 //   - A configurable FIFO buffer module with parameterized //
 //     width and and depth for versatile data buffering.    //
@@ -23,39 +23,39 @@
 //                                                          //
 // This source file is free for all use and distribution    //
 // "as is." No restrictions apply to its use, modification, //
-// or redistribution provided that this notice remains 		  //
-//  included in any derivative work.						            //
-//															                            //
+// or redistribution provided that this notice remains 		//
+//  included in any derivative work.						//
+//															//
 // License Terms:                                           //
 // 1. You are free to use, modify, and distribute this    	//
-//    code for any purpose, including commercial 			      //
-//	  applications.											                    //
-// 2. You must retain this notice and the disclaimer  		  //
+//    code for any purpose, including commercial 			//
+//	  applications.											//
+// 2. You must retain this notice and the disclaimer  		//
 //    in all copies or substantial portions of the code.    //
 //                                                          //
-// Disclaimer:                                      		    //
-// THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY  		  //
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT		    //
-// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 			      //
-// FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.	  //
-// IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM,	  //
-// DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF		  //
-// CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF,		  //
+// Disclaimer:                                      		//
+// THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY  		//
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT		//
+// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 			//
+// FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.	//
+// IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM,	//
+// DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF		//
+// CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF,		//
 // OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER  	//
-// DEALINGS IN THE SOFTWARE.								                //
+// DEALINGS IN THE SOFTWARE.								//
 //////////////////////////////////////////////////////////////
 
 module spi_fifo #(parameter 	WIDTH = 8, 
-								              DEPTH = 4) 
+								DEPTH = 4) 
 	(
-		input 					        clk, 
-		input   				        rst, 
-		input					          we, 
-		input					          re, 
-    input	     [WIDTH-1:0]  din, 
-    output reg [WIDTH-1:0]  dout, 
-		output 					        full, 
-		output 					        empty
+		input 					clk, 
+		input   				rst, 
+		input					we, 
+		input					re, 
+		input	   [WIDTH-1:0] 	din, 
+		output reg [WIDTH-1:0] 	dout, 
+		output 					full, 
+		output 					empty
 	);
 	
 	// Declare memory (Default Configuration of 4x8)

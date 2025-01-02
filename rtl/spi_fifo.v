@@ -53,7 +53,7 @@ module spi_fifo #(parameter 	WIDTH = 8,
 		input			we, 
 		input			re, 
 		input	   [WIDTH-1:0] 	din, 
-		output reg [WIDTH-1:0] 	dout, 
+		output     [WIDTH-1:0] 	dout, 
 		output 			full, 
 		output 			empty
 	);
@@ -64,18 +64,8 @@ module spi_fifo #(parameter 	WIDTH = 8,
 	// Declare internal read, write pointers
 	reg [$clog2(DEPTH):0] rd_ptr, wr_ptr; 		
 	
-	// Read Logic
-	always @(posedge clk, negedge rst)
-		begin
-			if(!rst)
-				begin
-					dout <= 0;
-				end
-			else if(re && (!empty)) 
-				begin
-					dout <= mem[rd_ptr];
-				end
-		end
+	// fifo data output
+  	assign  dout = (!rst)? 8'b0 : mem[rd_ptr];
 	
 	// Write Logic
 	always @(posedge clk, negedge rst)
